@@ -1,5 +1,7 @@
 version: '3.8'
 services:
+  
+  # Backend Service
   backend:
     build: ./doctor-office-backend
     ports:
@@ -8,8 +10,11 @@ services:
       - mongo
     environment:
       - MONGO_URI=mongodb://mongo:27017/appointments
+      - PORT=3000
     command: "npm start"
-    restart: always   # Adding restart policy for backend
+    restart: always
+
+  # Frontend Service
   frontend:
     build: ./doctor-office-frontend
     ports:
@@ -18,9 +23,12 @@ services:
       - backend
     environment:
       - PORT=3001
+      - REACT_APP_API_URL=http://localhost:3000 # Use localhost for browser access
     restart: always
+
+  # MongoDB Service
   mongo:
     image: mongo
     ports:
       - "27017:27017"
-    restart: always  # Adding restart policy for MongoDB
+    restart: always

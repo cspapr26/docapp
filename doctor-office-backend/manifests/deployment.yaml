@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: 588738610761.dkr.ecr.us-east-2.amazonaws.com/sharanya-group:backend-latest
+        image: 992382470769.dkr.ecr.us-east-1.amazonaws.com/test-web-app:backend
         ports:
         - containerPort: 3000
         env:
@@ -30,5 +30,6 @@ spec:
     app: backend
   ports:
     - protocol: TCP
-      port: 3000
+      port: 80  # Changed from 3000 to 80
       targetPort: 3000
+  type: ClusterIP  # Added type: ClusterIP

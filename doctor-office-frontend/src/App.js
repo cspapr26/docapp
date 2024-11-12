@@ -1,36 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+const API_URL = "k8s-default-appingre-5fda151b2b-1177123344.us-west-1.elb.amazonaws.com" || 'http://localhost:3000'; // Use localhost for browser access
+
 function App() {
   const [appointments, setAppointments] = useState([]);
   const [form, setForm] = useState({ patientName: '', doctorName: '', date: '' });
 
+  const fetchAppointments = () => {
+    console.log('Fetching appointments from:', API_URL);
+    fetch(`http://k8s-default-appingre-5fda151b2b-1177123344.us-west-1.elb.amazonaws.com/api/appointments`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch appointments: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        console.log('Fetched appointments:', data);
+        setAppointments(data);
+      })
+      .catch(err => {
+        console.error('Error fetching appointments:', err);
+        alert('Failed to load appointments. Please try again later.');
+      });
+  };
+
   useEffect(() => {
-    fetch(window.location.origin + '/api/appointments')
-      .then(res => res.json())
-      .then(data => setAppointments(data));
+    fetchAppointments();
   }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch(window.location.origin + '/api/appointments', {
+    
+    if (!form.patientName || !form.doctorName || !form.date) {
+      alert("Please fill out all fields.");
+      return;
+    }
+
+    console.log('Submitting appointment:', form);
+    fetch(`http://k8s-default-appingre-5fda151b2b-1177123344.us-west-1.elb.amazonaws.com/api/appointments/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
-    }).then(res => res.json())
-      .then(newAppointment => setAppointments([...appointments, newAppointment]));
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Failed to save appointment: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then(newAppointment => {
+        console.log('New appointment saved:', newAppointment);
+        setForm({ patientName: '', doctorName: '', date: '' });
+        fetchAppointments(); // Refetch appointments after saving
+      })
+      .catch(err => {
+        console.error('Error saving appointment:', err);
+        alert("Failed to save appointment. Please try again later.");
+      });
   };
 
   return (
     <div className="App">
       <div className="logo-header">
-        <svg
-          className="app-logo-svg"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 500 100"
-          width="100%"
-          height="100%"
-        >
+        <svg className="app-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 100" width="100%" height="100%">
           <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle">
             Doctor's Office Appointments
           </text>
@@ -59,13 +93,18 @@ function App() {
         <button className="submit-button" type="submit">Book Appointment</button>
       </form>
 
-      <ul className="appointments-list">
-        {appointments.map((appt) => (
-          <li className="appointment-item" key={appt._id}>
-            <strong>{appt.patientName}</strong> with Dr. <strong>{appt.doctorName}</strong> on <strong>{new Date(appt.date).toLocaleDateString()}</strong>
-          </li>
-        ))}
-      </ul>
+      {appointments.length > 0 ? (
+        <ul className="appointments-list">
+          {appointments.map((appt) => (
+            <li className="appointment-item" key={appt._id}>
+              <strong>{appt.patientName}</strong> with Dr. <strong>{appt.doctorName}</strong> on{' '}
+              <strong>{new Date(appt.date).toLocaleDateString()}</strong>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No appointments available.</p>
+      )}
     </div>
   );
 }
